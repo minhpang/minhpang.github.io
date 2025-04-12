@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>求图 - iPhone Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, 'SF Pro Text', sans-serif;
+      background: #000;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      overflow-y: auto;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .container {
+      width: 375px; /* iPhone 12/13宽度 */
+      min-height: 100vh;
+      background: #000;
+      padding: 16px;
+      padding-top: 44px; /* 刘海屏 */
+    }
+    .logged-in .container {
+      padding-bottom: 100px; /* Tab Bar + Home指示条 */
+    }
+    h1 {
+      font-size: 17px; /* iOS导航标题 */
+      font-weight: 600;
+      color: #fff;
+      text-align: center;
+      margin: 16px 0;
+    }
+    .section { display: none; }
+    .section.active { display: block; }
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      background: #1c1c1e;
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 17px;
+      outline: none;
+      resize: none;
+    }
+    textarea { height: 100px; }
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #ff3b30; /* iOS红色 */
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 17px;
+      font-weight: 500;
+      cursor: pointer;
+      margin: 8px 0;
+      min-height: 44px;
+    }
+    button:active { background: #d32f2f; }
+    .photo-list img, .uploaded-photo img, .map-placeholder img {
+      width: 100%;
+      border-radius: 10px;
+      margin: 8px 0;
+    }
+    .reward, .info {
+      text-align: center;
+      color: #ff3b30;
+      font-size: 17px;
+      margin: 16px 0;
+      font-weight: 500;
+    }
+    .request-item {
+      padding: 12px;
+      margin: 8px 0;
+      background: #1c1c1e;
+      border-radius: 10px;
+    }
+    .request-item p { font-size: 15px; }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 10px 0;
+    }
+    .back-btn {
+      position: absolute;
+      left: 16px;
+      background: none;
+      border: none;
+      color: #ff3b30;
+      font-size: 17px;
+      font-weight: 500;
+      cursor: pointer;
+      min-height: 44px;
+    }
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      width: 375px;
+      height: 83px;
+      display: flex;
+      background: rgba(28, 28, 30, 0.9);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid #3a3a3c;
+      padding-bottom: 34px;
+      display: none;
+    }
+    .logged-in .bottom-nav { display: flex; }
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+      min-height: 44px;
+    }
+    .nav-item.active { color: #ff3b30; }
+    .nav-item:active { background: rgba(255, 255, 255, 0.1); }
+    .nav-item::before {
+      content: '';
+      display: block;
+      width: 28px;
+      height: 28px;
+      margin-bottom: 4px;
+      background-size: contain;
+    }
+    .nav-item.request::before {
+      background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="%23fff" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>');
+    }
+    .nav-item.respond::before {
+      background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="%23fff" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>');
+    }
+    .nav-item.profile::before {
+      background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="%23fff" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>');
+    }
+    .nav-item.active::before {
+      filter: brightness(0) saturate(100%) hue-rotate(0deg) invert(37%) sepia(99%) saturate(7500%) hue-rotate(356deg) brightness(91%) contrast(108%);
+    }
+    .map-placeholder {
+      position: relative;
+      text-align: center;
+    }
+    .map-placeholder p {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #fff;
+      font-size: 15px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 8px;
+      border-radius: 8px;
+    }
+    .nav-btn {
+      background: #1c1c1e;
+      color: #ff3b30;
+    }
+    .nav-btn:active { background: #2c2c2e; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 登录页面 -->
+    <div id="login" class="section active">
+      <div class="header">
+        <h1>求图</h1>
+      </div>
+      <input type="text" id="username" placeholder="用户名">
+      <input type="password" id="password" placeholder="密码">
+      <button onclick="login()">登录</button>
+    </div>
+
+    <!-- 发送请求页面 -->
+    <div id="request" class="section">
+      <div class="header">
+        <h1>发送请求</h1>
+      </div>
+      <div class="map-placeholder">
+        <img src="https://via.placeholder.com/343x200?text=地图占位" alt="Map Placeholder">
+        <p>点击选择地点（模拟地图）</p>
+      </div>
+      <input type="text" id="location" placeholder="已选地点（如：巴黎埃菲尔铁塔）" readonly>
+      <textarea id="description" placeholder="描述你的需求（如：日落时的照片）"></textarea>
+      <button onclick="submitRequest()">提交请求</button>
+    </div>
+
+    <!-- 回应请求页面 -->
+    <div id="open-requests" class="section">
+      <div class="header">
+        <h1>回应请求</h1>
+      </div>
+      <div class="request-item">
+        <p><strong>地点</strong>: 巴黎埃菲尔铁塔</p>
+        <p><strong>需求</strong>: 日落时分的照片</p>
+        <button onclick="respondRequest('巴黎埃菲尔铁塔')">回应此请求</button>
+        <button class="nav-btn" onclick="navigateTo('巴黎埃菲尔铁塔')">导航到地点</button>
+      </div>
+      <div class="request-item">
+        <p><strong>地点</strong>: 东京涩谷</p>
+        <p><strong>需求</strong>: 夜晚十字路口人流</p>
+        <button onclick="respondRequest('东京涩谷')">回应此请求</button>
+        <button class="nav-btn" onclick="navigateTo('东京涩谷')">导航到地点</button>
+      </div>
+    </div>
+
+    <!-- 上传照片页面 -->
+    <div id="respond" class="section">
+      <div class="header">
+        <button class="back-btn" onclick="goToOpenRequests()">返回</button>
+        <h1>上传照片</h1>
+      </div>
+      <input type="text" id="photo-location" placeholder="地点" readonly>
+      <input type="text" id="photo-description" placeholder="照片描述">
+      <div class="uploaded-photo">
+        <img src="https://via.placeholder.com/343x180?text=上传的照片" alt="Uploaded Photo">
+      </div>
+      <button onclick="submitPhoto()">提交照片</button>
+    </div>
+
+    <!-- 我的页面 -->
+    <div id="profile" class="section">
+      <div class="header">
+        <h1>我的</h1>
+      </div>
+      <div class="info">用户名：旅行者123</div>
+      <div class="reward">当前积分：10</div>
+      <div class="reward">最近奖励：回应巴黎请求 +5 积分</div>
+      <button onclick="logout()">退出登录</button>
+    </div>
+  </div>
+
+  <!-- 底部导航 -->
+  <div class="bottom-nav">
+    <div class="nav-item request" onclick="goToRequest()">发送请求</div>
+    <div class="nav-item respond" onclick="goToOpenRequests()">回应请求</div>
+    <div class="nav-item profile" onclick="goToProfile()">我的</div>
+  </div>
+
+  <script>
+    let currentLocation = '';
+
+    function login() {
+      const username = document.getElementById('username').value;
+      if (username) {
+        document.body.classList.add('logged-in');
+        showSection('request');
+        updateNav('request');
+      } else {
+        alert('请输入用户名');
+      }
+    }
+
+    function submitRequest() {
+      const location = document.getElementById('location').value;
+      const description = document.getElementById('description').value;
+      if (location && description) {
+        alert('请求已提交！');
+        goToOpenRequests();
+      } else {
+        alert('请从地图选择地点并填写描述');
+      }
+    }
+
+    function respondRequest(location) {
+      currentLocation = location;
+      document.getElementById('photo-location').value = location;
+      showSection('respond');
+    }
+
+    function submitPhoto() {
+      const description = document.getElementById('photo-description').value;
+      if (description) {
+        alert('照片已提交！获得5积分奖励');
+        goToProfile();
+      } else {
+        alert('请填写照片描述');
+      }
+    }
+
+    function navigateTo(location) {
+      alert(`正在导航到 ${location}（模拟Apple Maps）`);
+      // 实际开发中可调用：window.open(`maps://?q=${encodeURIComponent(location)}`);
+    }
+
+    function logout() {
+      alert('已退出登录');
+      document.body.classList.remove('logged-in');
+      showSection('login');
+      updateNav(null);
+    }
+
+    function showSection(sectionId) {
+      document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+      });
+      document.getElementById(sectionId).classList.add('active');
+      window.scrollTo(0, 0);
+    }
+
+    function updateNav(activeId) {
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      if (activeId) {
+        document.querySelector(`.nav-item.${activeId}`).classList.add('active');
+      }
+    }
+
+    function goToRequest() {
+      showSection('request');
+      updateNav('request');
+    }
+
+    function goToOpenRequests() {
+      showSection('open-requests');
+      updateNav('respond');
+    }
+
+    function goToProfile() {
+      showSection('profile');
+      updateNav('profile');
+    }
+
+    // 模拟地图点击
+    document.addEventListener('DOMContentLoaded', () => {
+      const mapPlaceholder = document.querySelector('.map-placeholder');
+      if (mapPlaceholder) {
+        mapPlaceholder.addEventListener('click', () => {
+          const location = prompt('模拟地图：请输入地点（如：巴黎埃菲尔铁塔）');
+          if (location) {
+            document.getElementById('location').value = location;
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>
