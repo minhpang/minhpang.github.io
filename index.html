@@ -1,348 +1,983 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>求图 - iPhone Demo</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, 'SF Pro Text', sans-serif;
-      background: #000;
-      color: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      min-height: 100vh;
-      overflow-y: auto;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .container {
-      width: 375px; /* iPhone 12/13宽度 */
-      min-height: 100vh;
-      background: #000;
-      padding: 16px;
-      padding-top: 44px; /* 刘海屏 */
-    }
-    .logged-in .container {
-      padding-bottom: 100px; /* Tab Bar + Home指示条 */
-    }
-    h1 {
-      font-size: 17px; /* iOS导航标题 */
-      font-weight: 600;
-      color: #fff;
-      text-align: center;
-      margin: 16px 0;
-    }
-    .section { display: none; }
-    .section.active { display: block; }
-    input, textarea {
-      width: 100%;
-      padding: 12px;
-      margin: 8px 0;
-      background: #1c1c1e;
-      border: none;
-      border-radius: 10px;
-      color: #fff;
-      font-size: 17px;
-      outline: none;
-      resize: none;
-    }
-    textarea { height: 100px; }
-    button {
-      width: 100%;
-      padding: 14px;
-      background: #ff3b30; /* iOS红色 */
-      border: none;
-      border-radius: 10px;
-      color: #fff;
-      font-size: 17px;
-      font-weight: 500;
-      cursor: pointer;
-      margin: 8px 0;
-      min-height: 44px;
-    }
-    button:active { background: #d32f2f; }
-    .photo-list img, .uploaded-photo img, .map-placeholder img {
-      width: 100%;
-      border-radius: 10px;
-      margin: 8px 0;
-    }
-    .reward, .info {
-      text-align: center;
-      color: #ff3b30;
-      font-size: 17px;
-      margin: 16px 0;
-      font-weight: 500;
-    }
-    .request-item {
-      padding: 12px;
-      margin: 8px 0;
-      background: #1c1c1e;
-      border-radius: 10px;
-    }
-    .request-item p { font-size: 15px; }
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      padding: 10px 0;
-    }
-    .back-btn {
-      position: absolute;
-      left: 16px;
-      background: none;
-      border: none;
-      color: #ff3b30;
-      font-size: 17px;
-      font-weight: 500;
-      cursor: pointer;
-      min-height: 44px;
-    }
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      width: 375px;
-      height: 83px;
-      display: flex;
-      background: rgba(28, 28, 30, 0.9);
-      backdrop-filter: blur(10px);
-      border-top: 1px solid #3a3a3c;
-      padding-bottom: 34px;
-      display: none;
-    }
-    .logged-in .bottom-nav { display: flex; }
-    .nav-item {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 12px;
-      cursor: pointer;
-      min-height: 44px;
-    }
-    .nav-item.active { color: #ff3b30; }
-    .nav-item:active { background: rgba(255, 255, 255, 0.1); }
-    .nav-item::before {
-      content: '';
-      display: block;
-      width: 28px;
-      height: 28px;
-      margin-bottom: 4px;
-      background-size: contain;
-    }
-    .nav-item.request::before {
-      background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="%23fff" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>');
-    }
-    .nav-item.respond::before {
-      background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="%23fff" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>');
-    }
-    .nav-item.profile::before {
-      background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="%23fff" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>');
-    }
-    .nav-item.active::before {
-      filter: brightness(0) saturate(100%) hue-rotate(0deg) invert(37%) sepia(99%) saturate(7500%) hue-rotate(356deg) brightness(91%) contrast(108%);
-    }
-    .map-placeholder {
-      position: relative;
-      text-align: center;
-    }
-    .map-placeholder p {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #fff;
-      font-size: 15px;
-      background: rgba(0, 0, 0, 0.5);
-      padding: 8px;
-      border-radius: 8px;
-    }
-    .nav-btn {
-      background: #1c1c1e;
-      color: #ff3b30;
-    }
-    .nav-btn:active { background: #2c2c2e; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>路旗(RoadFlag)演示</title>
+    <style>
+        :root {
+            --primary-red: #FF3B30;
+            --dark-red: #D70015;
+            --black: #000000;
+            --dark-bg: #121212;
+            --card-bg: #1E1E1E;
+            --gray: #8E8E93;
+            --light-gray: #2C2C2E;
+            --white: #FFFFFF;
+        }
+        
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark-bg);
+            color: var(--white);
+        }
+        
+        .container {
+            max-width: 414px;
+            margin: 0 auto;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* 导航栏 */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 16px;
+            background-color: var(--card-bg);
+            border-bottom: 0.5px solid var(--light-gray);
+        }
+        
+        .navbar-title {
+            font-weight: 600;
+            font-size: 17px;
+        }
+        
+        .navbar-button {
+            color: var(--primary-red);
+            font-weight: 500;
+            background: none;
+            border: none;
+            font-size: 16px;
+        }
+        
+        /* 按钮样式 */
+        .button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-red);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 500;
+            text-align: center;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+        
+        .button.secondary {
+            background-color: var(--light-gray);
+            color: var(--white);
+        }
+        
+        /* 卡片样式 */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 10px;
+            border: 0.5px solid var(--light-gray);
+        }
+        
+        .task-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 6px;
+        }
+        
+        .task-points {
+            color: var(--primary-red);
+            font-size: 15px;
+            font-weight: 500;
+        }
+        
+        .task-stats {
+            display: flex;
+            margin-top: 8px;
+            font-size: 13px;
+            color: var(--gray);
+        }
+        
+        .task-stat {
+            display: flex;
+            align-items: center;
+            margin-right: 12px;
+        }
+        
+        .task-stat svg {
+            margin-right: 4px;
+            width: 14px;
+            height: 14px;
+            fill: var(--gray);
+        }
+        
+        /* 表单元素 */
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: var(--white);
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--light-gray);
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            color: var(--white);
+        }
+        
+        textarea {
+            height: 100px;
+        }
+        
+        /* 页面切换 */
+        .page {
+            display: none;
+            padding: 16px;
+            padding-bottom: 84px; /* 给tab bar留空间 */
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        /* 地图占位图 */
+        .map-placeholder {
+            width: 100%;
+            height: 200px;
+            background-color: var(--light-gray);
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--gray);
+            margin: 16px 0;
+        }
+        
+        /* 照片预览 */
+        .photo-preview {
+            width: 100%;
+            height: 200px;
+            background-color: var(--light-gray);
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 16px 0;
+            overflow: hidden;
+        }
+        
+        .photo-preview img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        
+        /* 标签栏 - iOS风格 */
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            max-width: 414px;
+            display: none; /* 默认隐藏，登录后显示 */
+            flex;
+            background-color: var(--card-bg);
+            border-top: 0.5px solid var(--light-gray);
+            padding: 8px 0;
+            height: 84px;
+            box-sizing: border-box;
+        }
+        
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray);
+            text-decoration: none;
+            font-size: 12px;
+            width: 33.33%;
+            padding: 6px 0;
+        }
+        
+        .tab-item.active {
+            color: var(--primary-red);
+        }
+        
+        .tab-icon {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* 空状态提示 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--gray);
+        }
+        
+        /* 状态标签 */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+        
+        .status-pending {
+            background-color: rgba(255, 214, 10, 0.15);
+            color: #FFD60A;
+        }
+        
+        .status-completed {
+            background-color: rgba(48, 209, 88, 0.15);
+            color: #30D158;
+        }
+        
+        .status-inprogress {
+            background-color: rgba(10, 132, 255, 0.15);
+            color: #0A84FF;
+        }
+        
+        /* 响应者列表 */
+        .responder-list {
+            margin-top: 16px;
+        }
+        
+        .responder-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 0.5px solid var(--light-gray);
+        }
+        
+        .responder-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: var(--light-gray);
+            border-radius: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 12px;
+        }
+        
+        .responder-info {
+            flex: 1;
+        }
+        
+        .responder-name {
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        
+        .responder-status {
+            font-size: 12px;
+            color: var(--gray);
+        }
+        
+        /* 登录保护 */
+        .login-protected {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 60vh;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .login-protected-icon {
+            font-size: 40px;
+            color: var(--primary-red);
+            margin-bottom: 16px;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <!-- 登录页面 -->
-    <div id="login" class="section active">
-      <div class="header">
-        <h1>求图</h1>
-      </div>
-      <input type="text" id="username" placeholder="用户名">
-      <input type="password" id="password" placeholder="密码">
-      <button onclick="login()">登录</button>
+    <div class="container">
+        <!-- 登录页面 -->
+        <div class="page active" id="login-page">
+            <div style="text-align: center; margin-top: 60px;">
+                <div style="font-size: 50px; color: var(--primary-red);">🚩</div>
+                <h1 style="margin-top: 16px;">路旗</h1>
+                <p style="color: var(--gray);">全球照片需求，本地即时解决</p>
+            </div>
+            
+            <div style="margin-top: 60px; padding: 0 20px;">
+                <div class="form-group">
+                    <label>邮箱</label>
+                    <input type="email" id="login-email" value="demo_requester@roadflag.com">
+                </div>
+                
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="login-password" value="123456">
+                </div>
+                
+                <button class="button" onclick="login()">登录</button>
+                
+                <p style="text-align: center; color: var(--gray); font-size: 14px; margin-top: 20px;">
+                    演示账号已自动填充，直接点击登录
+                </p>
+            </div>
+        </div>
+        
+        <!-- 发送请求页面 -->
+        <div class="page" id="requests-page">
+            <div class="navbar">
+                <div class="navbar-title">我的请求</div>
+                <button class="navbar-button" onclick="showPage('create-request-page')">新建</button>
+            </div>
+            
+            <div id="my-requests-list">
+                <div class="card" onclick="showRequestDetail('清华大学二校门照片', '需要二校门正面清晰照片，包含"清华园"牌匾', 300, 'pending', 24, 3)">
+                    <div class="task-title">
+                        清华大学二校门照片
+                        <span class="status-badge status-pending">待响应</span>
+                    </div>
+                    <div class="task-points">300积分</div>
+                    <div class="task-stats">
+                        <div class="task-stat">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                            </svg>
+                            24人看过
+                        </div>
+                        <div class="task-stat">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                            </svg>
+                            3人响应中
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card" onclick="showRequestDetail('北京大学图书馆', '需要图书馆正门全景照片', 400, 'inprogress', 42, 5)">
+                    <div class="task-title">
+                        北京大学图书馆
+                        <span class="status-badge status-inprogress">响应中</span>
+                    </div>
+                    <div class="task-points">400积分</div>
+                    <div class="task-stats">
+                        <div class="task-stat">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                            </svg>
+                            42人看过
+                        </div>
+                        <div class="task-stat">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                            </svg>
+                            5人响应中
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card" onclick="showRequestDetail('中关村创业大街标志', '需要街口标志性雕塑照片', 250, 'completed', 18, 2)">
+                    <div class="task-title">
+                        中关村创业大街标志
+                        <span class="status-badge status-completed">已完成</span>
+                    </div>
+                    <div class="task-points">250积分</div>
+                    <div class="task-stats">
+                        <div class="task-stat">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                            </svg>
+                            18人看过
+                        </div>
+                        <div class="task-stat">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                            </svg>
+                            2人响应过
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 回应请求页面 -->
+        <div class="page" id="responses-page">
+            <div class="navbar">
+                <div class="navbar-title">可接任务</div>
+                <button class="navbar-button" onclick="refreshTasks()">刷新</button>
+            </div>
+            
+            <div id="available-requests-list">
+                <div class="card" onclick="showResponseDetail('颐和园十七孔桥', '需要桥身全景照片，最好有落日景色', 350, '2.3公里', '6小时', 8)">
+                    <div class="task-title">颐和园十七孔桥</div>
+                    <div class="task-points">350积分</div>
+                    <div class="task-stats">
+                        <div class="task-stat">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                            </svg>
+                            2.3公里
+                        </div>
+                        <div class="task-stat">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+                            </svg>
+                            剩余6小时
+                        </div>
+                        <div class="task-stat">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                            </svg>
+                            8人响应中
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card" onclick="showResponseDetail('798艺术区涂鸦墙', '需要最新的涂鸦作品照片，全景+细节', 280, '1.8公里', '12小时', 3)">
+                    <div class="task-title">798艺术区涂鸦墙</div>
+                    <div class="task-points">280积分</div>
+                    <div class="task-stats">
+                        <div class="task-stat">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                            </svg>
+                            1.8公里
+                        </div>
+                        <div class="task-stat">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+                            </svg>
+                            剩余12小时
+                        </div>
+                        <div class="task-stat">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                            </svg>
+                            3人响应中
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card" onclick="showResponseDetail('国家体育场鸟巢', '需要夜景照片，展示灯光效果', 420, '5.6公里', '3天', 12)">
+                    <div class="task-title">国家体育场鸟巢</div>
+                    <div class="task-points">420积分</div>
+                    <div class="task-stats">
+                        <div class="task-stat">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                            </svg>
+                            5.6公里
+                        </div>
+                        <div class="task-stat">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+                            </svg>
+                            剩余3天
+                        </div>
+                        <div class="task-stat">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M16 11c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                            </svg>
+                            12人响应中
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 我的页面 -->
+        <div class="page" id="profile-page">
+            <div class="navbar">
+                <div class="navbar-title">我的账户</div>
+            </div>
+            
+            <div style="padding: 20px; text-align: center;">
+                <div style="width: 80px; height: 80px; background: var(--light-gray); border-radius: 40px; margin: 0 auto 15px; display: flex; justify-content: center; align-items: center; font-size: 30px;">
+                    👤
+                </div>
+                <h3>演示用户</h3>
+                <div style="color: var(--gray); margin-bottom: 20px;">demo@roadflag.com</div>
+                
+                <div style="background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 20px; border: 0.5px solid var(--light-gray);">
+                    <div style="font-size: 14px; color: var(--gray);">我的积分</div>
+                    <div style="font-size: 28px; font-weight: 600; color: var(--primary-red); margin: 8px 0;">1,850</div>
+                    <button class="button" style="margin-top: 0; padding: 8px;">积分兑换</button>
+                </div>
+                
+                <div style="background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 20px; border: 0.5px solid var(--light-gray); text-align: left;">
+                    <div style="font-weight: 500; margin-bottom: 12px;">任务统计</div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: var(--gray);">已发布请求</span>
+                        <span>5</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: var(--gray);">已接受任务</span>
+                        <span>12</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--gray);">已完成任务</span>
+                        <span>8</span>
+                    </div>
+                </div>
+                
+                <button class="button secondary" onclick="logout()">退出登录</button>
+            </div>
+        </div>
+        
+        <!-- 创建请求页面 -->
+        <div class="page" id="create-request-page">
+            <div class="navbar">
+                <div class="navbar-title">新建请求</div>
+                <button class="navbar-button" onclick="showPage('requests-page')">取消</button>
+            </div>
+            
+            <div style="padding: 16px;">
+                <div class="form-group">
+                    <label>标题</label>
+                    <input type="text" id="request-title" placeholder="例如：清华大学二校门照片">
+                </div>
+                
+                <div class="form-group">
+                    <label>描述</label>
+                    <textarea id="request-desc" placeholder="详细描述您需要的照片内容"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>积分奖励</label>
+                    <input type="number" id="request-points" value="300">
+                </div>
+                
+                <div class="form-group">
+                    <label>位置</label>
+                    <div class="map-placeholder" onclick="showPage('location-picker-page')">
+                        点击选择位置
+                    </div>
+                </div>
+                
+                <button class="button" onclick="createRequest()">发布请求</button>
+            </div>
+        </div>
+        
+        <!-- 位置选择页面 -->
+        <div class="page" id="location-picker-page">
+            <div class="navbar">
+                <div class="navbar-title">选择位置</div>
+                <button class="navbar-button" onclick="showPage('create-request-page')">完成</button>
+            </div>
+            
+            <div class="map-placeholder" style="height: 70vh;">
+                [地图界面]
+                <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--primary-red); color: white; padding: 10px 20px; border-radius: 20px;">
+                    长按地图选择位置
+                </div>
+            </div>
+        </div>
+        
+        <!-- 请求详情页面 -->
+        <div class="page" id="request-detail-page">
+            <div class="navbar">
+                <div class="navbar-title">请求详情</div>
+                <button class="navbar-button" onclick="showPage('requests-page')">返回</button>
+            </div>
+            
+            <div style="padding: 16px;">
+                <h2 id="request-detail-title">清华大学二校门照片</h2>
+                <div style="color: var(--primary-red); font-size: 16px; margin: 10px 0;" id="request-detail-points">300积分</div>
+                
+                <div style="display: flex; margin-bottom: 16px;">
+                    <div style="margin-right: 16px;">
+                        <div style="font-size: 13px; color: var(--gray);">状态</div>
+                        <div id="request-detail-status" style="font-size: 15px;">待响应</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 13px; color: var(--gray);">发布时间</div>
+                        <div style="font-size: 15px;">2小时前</div>
+                    </div>
+                </div>
+                
+                <div style="background: var(--card-bg); padding: 16px; border-radius: 12px; margin-bottom: 16px; border: 0.5px solid var(--light-gray);">
+                    <div style="font-weight: 500; margin-bottom: 8px;">请求描述</div>
+                    <div id="request-detail-desc" style="line-height: 1.5;">需要二校门正面清晰照片，包含"清华园"牌匾</div>
+                </div>
+                
+                <div style="background: var(--card-bg); padding: 16px; border-radius: 12px; margin-bottom: 16px; border: 0.5px solid var(--light-gray);">
+                    <div style="font-weight: 500; margin-bottom: 8px;">统计数据</div>
+                    <div style="display: flex; margin-bottom: 8px;">
+                        <div style="margin-right: 24px;">
+                            <div style="font-size: 13px; color: var(--gray);">查看次数</div>
+                            <div style="font-size: 15px;">24次</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 13px; color: var(--gray);">响应人数</div>
+                            <div style="font-size: 15px;">3人</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="map-placeholder">
+                    [请求位置地图]
+                </div>
+                
+                <div id="responders-section" style="margin-top: 20px;">
+                    <div style="font-weight: 500; margin-bottom: 12px;">响应者 (3)</div>
+                    <div class="responder-list">
+                        <div class="responder-item">
+                            <div class="responder-avatar">A</div>
+                            <div class="responder-info">
+                                <div class="responder-name">Alice</div>
+                                <div class="responder-status">正在前往目的地</div>
+                            </div>
+                        </div>
+                        <div class="responder-item">
+                            <div class="responder-avatar">B</div>
+                            <div class="responder-info">
+                                <div class="responder-name">Bob</div>
+                                <div class="responder-status">已拍摄照片，待上传</div>
+                            </div>
+                        </div>
+                        <div class="responder-item">
+                            <div class="responder-avatar">C</div>
+                            <div class="responder-info">
+                                <div class="responder-name">Charlie</div>
+                                <div class="responder-status">已提交照片</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="request-submissions" style="margin-top: 20px; display: none;">
+                    <div style="font-weight: 500; margin-bottom: 12px;">已提交照片</div>
+                    <div class="photo-preview">
+                        <img src="https://via.placeholder.com/300x200/1E1E1E/FFFFFF?text=清华大学二校门" style="width: 100%;">
+                    </div>
+                    <button class="button" style="margin-top: 16px;">接受照片</button>
+                    <button class="button secondary" style="margin-top: 10px;">要求重拍</button>
+                </div>
+                
+                <button class="button secondary" onclick="showPage('requests-page')" style="margin-top: 16px;">返回列表</button>
+            </div>
+        </div>
+        
+        <!-- 回应详情页面 -->
+        <div class="page" id="response-detail-page">
+            <div class="navbar">
+                <div class="navbar-title">任务详情</div>
+                <button class="navbar-button" onclick="showPage('responses-page')">返回</button>
+            </div>
+            
+            <div style="padding: 16px;">
+                <h2 id="response-detail-title">颐和园十七孔桥</h2>
+                <div style="color: var(--primary-red); font-size: 16px; margin: 10px 0;" id="response-detail-points">350积分</div>
+                <div style="color: var(--gray); font-size: 14px; margin-bottom: 16px;" id="response-detail-distance">距您2.3公里</div>
+                
+                <div style="background: var(--card-bg); padding: 16px; border-radius: 12px; margin-bottom: 16px; border: 0.5px solid var(--light-gray);">
+                    <div style="font-weight: 500; margin-bottom: 8px;">任务描述</div>
+                    <div id="response-detail-desc" style="line-height: 1.5;">需要桥身全景照片，最好有落日景色</div>
+                </div>
+                
+                <div style="background: var(--card-bg); padding: 16px; border-radius: 12px; margin-bottom: 16px; border: 0.5px solid var(--light-gray);">
+                    <div style="display: flex; justify-content: space-between;">
+                        <div>
+                            <div style="font-size: 13px; color: var(--gray);">剩余时间</div>
+                            <div style="font-size: 15px;" id="response-detail-time">6小时</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 13px; color: var(--gray);">响应人数</div>
+                            <div style="font-size: 15px;" id="response-detail-responders">8人</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="map-placeholder">
+                    [任务位置地图]
+                </div>
+                
+                <button class="button" onclick="acceptResponse()">接受任务</button>
+                <button class="button secondary" onclick="showPage('responses-page')" style="margin-top: 10px;">返回列表</button>
+            </div>
+        </div>
+        
+        <!-- 完成任务页面 -->
+        <div class="page" id="complete-task-page">
+            <div class="navbar">
+                <div class="navbar-title">提交照片</div>
+                <button class="navbar-button" onclick="showPage('response-detail-page')">取消</button>
+            </div>
+            
+            <div style="padding: 16px;">
+                <div class="photo-preview">
+                    <img id="task-preview-image" src="" style="display: none;">
+                    <div>点击上传照片</div>
+                </div>
+                
+                <div class="form-group">
+                    <label>备注</label>
+                    <textarea id="task-notes" placeholder="添加照片说明（可选）"></textarea>
+                </div>
+                
+                <button class="button" onclick="submitTaskCompletion()">提交完成</button>
+            </div>
+        </div>
+        
+        <!-- 任务提交成功页面 -->
+        <div class="page" id="task-submitted-page">
+            <div style="text-align: center; padding: 60px 20px;">
+                <div style="font-size: 60px; color: var(--primary-red);">✅</div>
+                <h2 style="margin-top: 16px;">任务已提交</h2>
+                <p style="margin-top: 8px;">您已获得350积分</p>
+                <p style="color: var(--gray); margin-top: 8px;">请求方审核通过后，积分将存入您的账户</p>
+                
+                <button class="button" style="margin-top: 30px;" onclick="showPage('responses-page')">返回任务列表</button>
+            </div>
+        </div>
+        
+        <!-- 未登录保护页面 -->
+        <div class="page" id="login-protected-page">
+            <div class="login-protected">
+                <div class="login-protected-icon">🔒</div>
+                <h3>请先登录</h3>
+                <p style="color: var(--gray); margin-top: 8px;">登录后才能查看此内容</p>
+                <button class="button" style="margin-top: 20px;" onclick="showPage('login-page')">前往登录</button>
+            </div>
+        </div>
+        
+        <!-- Tab Bar - iOS风格 -->
+        <div class="tab-bar" id="main-tab-bar">
+            <a class="tab-item" onclick="checkLogin('requests-page')">
+                <div class="tab-icon">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                        <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                    </svg>
+                </div>
+                <div>发送请求</div>
+            </a>
+            <a class="tab-item" onclick="checkLogin('responses-page')">
+                <div class="tab-icon">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                        <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 9h-2V5h2v6zm0 4h-2v-2h2v2z"/>
+                    </svg>
+                </div>
+                <div>回应请求</div>
+            </a>
+            <a class="tab-item" onclick="checkLogin('profile-page')">
+                <div class="tab-icon">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                    </svg>
+                </div>
+                <div>我的</div>
+            </a>
+        </div>
     </div>
 
-    <!-- 发送请求页面 -->
-    <div id="request" class="section">
-      <div class="header">
-        <h1>发送请求</h1>
-      </div>
-      <div class="map-placeholder">
-        <img src="https://via.placeholder.com/343x200?text=地图占位" alt="Map Placeholder">
-        <p>点击选择地点（模拟地图）</p>
-      </div>
-      <input type="text" id="location" placeholder="已选地点（如：巴黎埃菲尔铁塔）" readonly>
-      <textarea id="description" placeholder="描述你的需求（如：日落时的照片）"></textarea>
-      <button onclick="submitRequest()">提交请求</button>
-    </div>
-
-    <!-- 回应请求页面 -->
-    <div id="open-requests" class="section">
-      <div class="header">
-        <h1>回应请求</h1>
-      </div>
-      <div class="request-item">
-        <p><strong>地点</strong>: 巴黎埃菲尔铁塔</p>
-        <p><strong>需求</strong>: 日落时分的照片</p>
-        <button onclick="respondRequest('巴黎埃菲尔铁塔')">回应此请求</button>
-        <button class="nav-btn" onclick="navigateTo('巴黎埃菲尔铁塔')">导航到地点</button>
-      </div>
-      <div class="request-item">
-        <p><strong>地点</strong>: 东京涩谷</p>
-        <p><strong>需求</strong>: 夜晚十字路口人流</p>
-        <button onclick="respondRequest('东京涩谷')">回应此请求</button>
-        <button class="nav-btn" onclick="navigateTo('东京涩谷')">导航到地点</button>
-      </div>
-    </div>
-
-    <!-- 上传照片页面 -->
-    <div id="respond" class="section">
-      <div class="header">
-        <button class="back-btn" onclick="goToOpenRequests()">返回</button>
-        <h1>上传照片</h1>
-      </div>
-      <input type="text" id="photo-location" placeholder="地点" readonly>
-      <input type="text" id="photo-description" placeholder="照片描述">
-      <div class="uploaded-photo">
-        <img src="https://via.placeholder.com/343x180?text=上传的照片" alt="Uploaded Photo">
-      </div>
-      <button onclick="submitPhoto()">提交照片</button>
-    </div>
-
-    <!-- 我的页面 -->
-    <div id="profile" class="section">
-      <div class="header">
-        <h1>我的</h1>
-      </div>
-      <div class="info">用户名：旅行者123</div>
-      <div class="reward">当前积分：10</div>
-      <div class="reward">最近奖励：回应巴黎请求 +5 积分</div>
-      <button onclick="logout()">退出登录</button>
-    </div>
-  </div>
-
-  <!-- 底部导航 -->
-  <div class="bottom-nav">
-    <div class="nav-item request" onclick="goToRequest()">发送请求</div>
-    <div class="nav-item respond" onclick="goToOpenRequests()">回应请求</div>
-    <div class="nav-item profile" onclick="goToProfile()">我的</div>
-  </div>
-
-  <script>
-    let currentLocation = '';
-
-    function login() {
-      const username = document.getElementById('username').value;
-      if (username) {
-        document.body.classList.add('logged-in');
-        showSection('request');
-        updateNav('request');
-      } else {
-        alert('请输入用户名');
-      }
-    }
-
-    function submitRequest() {
-      const location = document.getElementById('location').value;
-      const description = document.getElementById('description').value;
-      if (location && description) {
-        alert('请求已提交！');
-        goToOpenRequests();
-      } else {
-        alert('请从地图选择地点并填写描述');
-      }
-    }
-
-    function respondRequest(location) {
-      currentLocation = location;
-      document.getElementById('photo-location').value = location;
-      showSection('respond');
-    }
-
-    function submitPhoto() {
-      const description = document.getElementById('photo-description').value;
-      if (description) {
-        alert('照片已提交！获得5积分奖励');
-        goToProfile();
-      } else {
-        alert('请填写照片描述');
-      }
-    }
-
-    function navigateTo(location) {
-      alert(`正在导航到 ${location}（模拟Apple Maps）`);
-      // 实际开发中可调用：window.open(`maps://?q=${encodeURIComponent(location)}`);
-    }
-
-    function logout() {
-      alert('已退出登录');
-      document.body.classList.remove('logged-in');
-      showSection('login');
-      updateNav(null);
-    }
-
-    function showSection(sectionId) {
-      document.querySelectorAll('.section').forEach(section => {
-        section.classList.remove('active');
-      });
-      document.getElementById(sectionId).classList.add('active');
-      window.scrollTo(0, 0);
-    }
-
-    function updateNav(activeId) {
-      document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.remove('active');
-      });
-      if (activeId) {
-        document.querySelector(`.nav-item.${activeId}`).classList.add('active');
-      }
-    }
-
-    function goToRequest() {
-      showSection('request');
-      updateNav('request');
-    }
-
-    function goToOpenRequests() {
-      showSection('open-requests');
-      updateNav('respond');
-    }
-
-    function goToProfile() {
-      showSection('profile');
-      updateNav('profile');
-    }
-
-    // 模拟地图点击
-    document.addEventListener('DOMContentLoaded', () => {
-      const mapPlaceholder = document.querySelector('.map-placeholder');
-      if (mapPlaceholder) {
-        mapPlaceholder.addEventListener('click', () => {
-          const location = prompt('模拟地图：请输入地点（如：巴黎埃菲尔铁塔）');
-          if (location) {
-            document.getElementById('location').value = location;
-          }
-        });
-      }
-    });
-  </script>
+    <script>
+        // 当前用户角色 (requester或responder)
+        let currentUserRole = '';
+        let isLoggedIn = false;
+        
+        // 显示指定页面
+        function showPage(pageId) {
+            // 如果未登录且尝试访问非登录页面，显示登录保护页面
+            if (!isLoggedIn && pageId !== 'login-page') {
+                pageId = 'login-protected-page';
+            }
+            
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            document.getElementById(pageId).classList.add('active');
+            
+            // 更新tab bar状态
+            document.querySelectorAll('.tab-item').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 根据显示的页面激活对应的tab
+            if(pageId === 'requests-page' || pageId === 'create-request-page' || pageId === 'request-detail-page') {
+                document.querySelectorAll('.tab-item')[0].classList.add('active');
+            } else if(pageId === 'responses-page' || pageId === 'response-detail-page' || pageId === 'complete-task-page' || pageId === 'task-submitted-page') {
+                document.querySelectorAll('.tab-item')[1].classList.add('active');
+            } else if(pageId === 'profile-page') {
+                document.querySelectorAll('.tab-item')[2].classList.add('active');
+            }
+            
+            // 特殊页面逻辑
+            if(pageId === 'complete-task-page') {
+                // 模拟拍照
+                document.getElementById('task-preview-image').src = 'https://via.placeholder.com/300x200/1E1E1E/FFFFFF?text=颐和园十七孔桥';
+                document.getElementById('task-preview-image').style.display = 'block';
+                document.querySelector('#complete-task-page .photo-preview div').style.display = 'none';
+            }
+            
+            if(pageId === 'request-detail-page') {
+                const status = document.getElementById('request-detail-status').textContent;
+                if(status.includes('已完成')) {
+                    document.getElementById('request-submissions').style.display = 'block';
+                }
+            }
+        }
+        
+        // 检查登录状态
+        function checkLogin(pageId) {
+            if (!isLoggedIn) {
+                showPage('login-protected-page');
+            } else {
+                showPage(pageId);
+            }
+        }
+        
+        // 登录功能
+        function login() {
+            const email = document.getElementById('login-email').value;
+            if (!email) {
+                alert('请输入邮箱');
+                return;
+            }
+            
+            if(email.includes('requester')) {
+                currentUserRole = 'requester';
+            } else {
+                currentUserRole = 'responder';
+            }
+            
+            isLoggedIn = true;
+            document.getElementById('main-tab-bar').style.display = 'flex';
+            showPage(currentUserRole === 'requester' ? 'requests-page' : 'responses-page');
+        }
+        
+        // 退出登录
+        function logout() {
+            isLoggedIn = false;
+            currentUserRole = '';
+            document.getElementById('main-tab-bar').style.display = 'none';
+            showPage('login-page');
+        }
+        
+        // 刷新任务列表
+        function refreshTasks() {
+            if (!isLoggedIn) {
+                showPage('login-protected-page');
+                return;
+            }
+            alert('任务列表已刷新');
+        }
+        
+        // 显示请求详情
+        function showRequestDetail(title, desc, points, status, views, responders) {
+            if (!isLoggedIn) {
+                showPage('login-protected-page');
+                return;
+            }
+            
+            document.getElementById('request-detail-title').textContent = title;
+            document.getElementById('request-detail-desc').textContent = desc;
+            document.getElementById('request-detail-points').textContent = points + '积分';
+            
+            let statusText = '待响应';
+            let statusClass = 'status-pending';
+            
+            if (status === 'inprogress') {
+                statusText = '响应中';
+                statusClass = 'status-inprogress';
+            } else if (status === 'completed') {
+                statusText = '已完成';
+                statusClass = 'status-completed';
+            }
+            
+            document.getElementById('request-detail-status').textContent = statusText;
+            document.getElementById('request-detail-status').className = statusClass;
+            
+            // 显示/隐藏响应者区域
+            if (status === 'pending') {
+                document.getElementById('responders-section').style.display = 'none';
+            } else {
+                document.getElementById('responders-section').style.display = 'block';
+            }
+            
+            // 显示/隐藏提交照片区域
+            if (status === 'completed') {
+                document.getElementById('request-submissions').style.display = 'block';
+            } else {
+                document.getElementById('request-submissions').style.display = 'none';
+            }
+            
+            showPage('request-detail-page');
+        }
+        
+        // 显示回应详情
+        function showResponseDetail(title, desc, points, distance, time, responders) {
+            if (!isLoggedIn) {
+                showPage('login-protected-page');
+                return;
+            }
+            
+            document.getElementById('response-detail-title').textContent = title;
+            document.getElementById('response-detail-desc').textContent = desc;
+            document.getElementById('response-detail-points').textContent = points + '积分';
+            document.getElementById('response-detail-distance').textContent = '距您' + distance;
+            document.getElementById('response-detail-time').textContent = time;
+            document.getElementById('response-detail-responders').textContent = responders + '人';
+            
+            showPage('response-detail-page');
+        }
+        
+        // 接受任务
+        function acceptResponse() {
+            if (!isLoggedIn) {
+                showPage('login-protected-page');
+                return;
+            }
+            showPage('complete-task-page');
+        }
+        
+        // 提交任务完成
+        function submitTaskCompletion() {
+            if (!isLoggedIn) {
+                showPage('login-protected-page');
+                return;
+            }
+            showPage('task-submitted-page');
+        }
+        
+        // 创建请求
+        function createRequest() {
+            if (!isLoggedIn) {
+                showPage('login-protected-page');
+                return;
+            }
+            
+            const title = document.getElementById('request-title').value;
+            if(!title) {
+                alert('请输入请求标题');
+                return;
+            }
+            alert('请求"' + title + '"发布成功！');
+            showPage('requests-page');
+        }
+        
+        // 初始化显示登录页面
+        showPage('login-page');
+    </script>
 </body>
 </html>
